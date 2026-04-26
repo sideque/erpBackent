@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "build":"tse",
     "seed": "node src/seed/cli.js full",
     "seed:all": "node src/seed/cli.js full",
     "seedall": "node src/seed/cli.js full",
