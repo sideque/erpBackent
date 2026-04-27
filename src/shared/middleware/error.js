@@ -1,3 +1,4 @@
+const multer = require('multer');
 const ApiError = require('../utils/ApiError');
 
 function notFound(req, _res, next) {
@@ -6,6 +7,17 @@ function notFound(req, _res, next) {
 
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, _next) {
+  if (err instanceof multer.MulterError) {
+    const tooBig = err.code === 'LIMIT_FILE_SIZE';
+    return res.status(400).json({
+      success: false,
+      error: { message: tooBig ? 'Image too large (max 5MB)' : err.message },
+    });
+  }
+  if (err && err.name === 'Error' && err.message && /Only JPEG, PNG, and WebP/.test(err.message)) {
+    return res.status(400).json({ success: false, error: { message: err.message } });
+  }
+
   let status = err.status || 500;
   let message = err.message || 'Internal Server Error';
   let details = err.details;

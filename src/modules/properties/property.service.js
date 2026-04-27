@@ -1,6 +1,12 @@
+const fs = require('fs/promises');
+const path = require('path');
+const mongoose = require('mongoose');
 const { Property } = require('./property.model');
 const ApiError = require('../../shared/utils/ApiError');
 const { paginate } = require('../../shared/utils/paginate');
+const { UPLOAD_ROOT } = require('../../config/paths');
+
+const MAX_PROPERTY_IMAGES = 8;
 
 async function list(query) {
   const filter = {};
@@ -50,6 +56,63 @@ async function update(id, patch) {
 async function remove(id) {
   const p = await Property.findByIdAndDelete(id);
   if (!p) throw ApiError.notFound('Property not found');
+  const propDir = path.join(UPLOAD_ROOT, 'properties', String(p._id));
+  try {
+    await fs.rm(propDir, { recursive: true, force: true });
+  } catch {
+    // ignore
+  }
+}
+
+function isValidPropertyObjectId(id) {
+  return mongoose.isValidObjectId(id);
+}
+
+function publicPathToDisk(propertyId, publicUrl) {
+  const prefix = `/api/uploads/properties/${propertyId}/`;
+  if (typeof publicUrl !== 'string' || !publicUrl.startsWith(prefix)) {
+    return null;
+  }
+  const rest = publicUrl.slice(prefix.length);
+  if (rest.includes('..')) {
+    return null;
+  }
+  return path.join(UPLOAD_ROOT, 'properties', propertyId, path.basename(rest));
+}
+
+async function addImageFromUpload(id, publicUrl) {
+  if (!isValidPropertyObjectId(id)) {
+    throw ApiError.badRequest('Invalid property id');
+  }
+  const p = await Property.findById(id);
+  if (!p) throw ApiError.notFound('Property not found');
+  if (p.images && p.images.length >= MAX_PROPERTY_IMAGES) {
+    throw ApiError.badRequest(`A property can have at most ${MAX_PROPERTY_IMAGES} images`);
+  }
+  await Property.findByIdAndUpdate(id, { $push: { images: publicUrl } });
+  return get(id);
+}
+
+async function removeImage(id, publicUrl) {
+  if (!isValidPropertyObjectId(id)) {
+    throw ApiError.badRequest('Invalid property id');
+  }
+  const p = await Property.findById(id);
+  if (!p) throw ApiError.notFound('Property not found');
+  const list = p.images || [];
+  if (!list.includes(publicUrl)) {
+    throw ApiError.notFound('Image not found on this property');
+  }
+  const disk = publicPathToDisk(String(id), publicUrl);
+  await Property.findByIdAndUpdate(id, { $pull: { images: publicUrl } });
+  if (disk) {
+    try {
+      await fs.unlink(disk);
+    } catch {
+      // file already gone
+    }
+  }
+  return get(id);
 }
 
 async function summary() {
@@ -64,4 +127,14 @@ async function summary() {
   return { total, status, types, occupancy };
 }
 
-module.exports = { list, get, create, update, remove, summary };
+module.exports = {
+  list,
+  get,
+  create,
+  update,
+  remove,
+  summary,
+  addImageFromUpload,
+  removeImage,
+  MAX_PROPERTY_IMAGES,
+};

@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const env = require('./config/env');
 const routes = require('./routes');
 const { notFound, errorHandler } = require('./shared/middleware/error');
+const { UPLOAD_ROOT } = require('./config/paths');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 if (env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
 app.use('/api', rateLimit({ windowMs: 60 * 1000, max: 600 }));
+app.use('/api/uploads', express.static(UPLOAD_ROOT, { maxAge: '7d', index: false }));
 app.use('/api', routes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
