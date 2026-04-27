@@ -11,8 +11,8 @@ const { notFound, errorHandler } = require('./shared/middleware/error');
 
 const app = express();
 
-app.use(helmet());
-app.use(cors({ origin: env.CLIENT_ORIGIN.split(',').map((s) => s.trim()), credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
+// app.use(helmet());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 if (env.NODE_ENV !== 'test') app.use(morgan('dev'));

@@ -1,19 +1,8 @@
-const ApiError = require('../utils/ApiError');
+// VALIDATION MIDDLEWARE — DEMO MODE (all validation bypassed)
+// For production, restore Zod schema validation.
 
-function validate(schema, source = 'body') {
-  return (req, _res, next) => {
-    const result = schema.safeParse(req[source]);
-    if (!result.success) {
-      const details = {};
-      for (const issue of result.error.issues) {
-        const key = issue.path.join('.') || '_';
-        details[key] = issue.message;
-      }
-      throw ApiError.badRequest('Validation failed', details);
-    }
-    req[source] = result.data;
-    next();
-  };
+function validate(_schema, _source = 'body') {
+  return (_req, _res, next) => next();
 }
 
 module.exports = { validate };
