@@ -6,11 +6,8 @@ async function list(query) {
   const filter = {};
   if (query.type) filter.type = query.type;
   if (query.status) {
-    if (query.status.includes(',')) {
-      filter.status = { $in: query.status.split(',') };
-    } else {
-      filter.status = query.status;
-    }
+    const s = Array.isArray(query.status) ? query.status : query.status.split(',');
+    filter.status = s.length > 1 ? { $in: s } : s[0];
   }
   if (query.q) {
     filter.$or = [
