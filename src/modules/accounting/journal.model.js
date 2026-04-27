@@ -54,7 +54,7 @@ const journalSchema = new mongoose.Schema(
     totalDebit: { type: Number, default: 0 },
     totalCredit: { type: Number, default: 0 },
     status: { type: String, enum: ['DRAFT', 'POSTED', 'CANCELLED'], default: 'POSTED', index: true },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: String, ref: 'User' },
   },
   { timestamps: true }
 );

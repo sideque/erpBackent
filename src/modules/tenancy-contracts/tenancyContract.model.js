@@ -30,7 +30,7 @@ const tenancySchema = new mongoose.Schema(
     penaltyTerms: { type: String, default: '' },
     invoicesGenerated: { type: Boolean, default: false },
     notes: { type: String, default: '' },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: String, ref: 'User' },
   },
   { timestamps: true }
 );

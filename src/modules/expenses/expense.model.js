@@ -23,7 +23,7 @@ const expenseSchema = new mongoose.Schema(
     paidVia: { type: String, enum: ['CASH', 'BANK'], default: 'BANK' },
     receiptUrl: { type: String, default: '' },
     notes: { type: String, default: '' },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: String, ref: 'User' },
     accountCode: { type: String },
     accountName: { type: String },
   },

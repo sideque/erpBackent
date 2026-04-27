@@ -39,8 +39,8 @@ const managementContractSchema = new mongoose.Schema(
     additionalDocuments: [{ type: String }],
 
     // Audit Fields
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: String, ref: 'User' },
+    updatedBy: { type: String, ref: 'User' },
   },
   { timestamps: true }
 );
