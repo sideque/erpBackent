@@ -7,6 +7,9 @@ const env = {
   JWT_EXPIRES: process.env.JWT_EXPIRES || '7d',
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'https://erp-frontent.vercel.app',
   NODE_ENV: process.env.NODE_ENV || 'development',
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
 };
 
 module.exports = env;

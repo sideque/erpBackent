@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const PROPERTY_TYPES = ['APARTMENT', 'VILLA', 'OFFICE', 'LAND'];
-const PROPERTY_STATUS = ['AVAILABLE', 'RENTED', 'UNDER_MAINTENANCE'];
+const PROPERTY_STATUS = ['AVAILABLE', 'RENTED', 'UNDER_MAINTENANCE', 'MANAGED'];
 
 const ownershipSchema = new mongoose.Schema(
   {

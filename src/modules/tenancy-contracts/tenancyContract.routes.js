@@ -30,7 +30,20 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', requireRole('SUPER_ADMIN', 'MANAGER', 'AGENT'), async (req, res) => {
-  const contract = await TenancyContract.create(req.body);
+  const { property, startDate, endDate, code } = req.body;
+  
+  if (new Date(endDate) <= new Date(startDate)) {
+    throw ApiError.badRequest('End date must be after start date');
+  }
+
+  const activeContract = await TenancyContract.findOne({ property, status: 'ACTIVE' });
+  if (activeContract) {
+    throw ApiError.badRequest('Property already has an active tenancy contract');
+  }
+
+  const contractCode = code || `TC-${Date.now().toString().slice(-6)}`;
+  
+  const contract = await TenancyContract.create({ ...req.body, code: contractCode, createdBy: req.user.id });
   if (contract.status === 'ACTIVE') {
     await rentService.generateInvoicesForContract(contract);
     await Property.findByIdAndUpdate(contract.property, { status: 'RENTED' });
@@ -41,9 +54,23 @@ router.post('/', requireRole('SUPER_ADMIN', 'MANAGER', 'AGENT'), async (req, res
 router.patch('/:id', requireRole('SUPER_ADMIN', 'MANAGER'), async (req, res) => {
   const c = await TenancyContract.findByIdAndUpdate(req.params.id, req.body, { new: true });
   if (!c) throw ApiError.notFound('Contract not found');
-  if (c.status === 'TERMINATED' || c.status === 'EXPIRED') {
+  if (c.status === 'TERMINATED' || c.status === 'EXPIRED' || c.status === 'CANCELLED') {
     await Property.findByIdAndUpdate(c.property, { status: 'AVAILABLE' });
   }
+  ok(res, c);
+});
+
+router.patch('/:id/status', requireRole('SUPER_ADMIN', 'MANAGER'), async (req, res) => {
+  const { status } = req.body;
+  const c = await TenancyContract.findByIdAndUpdate(req.params.id, { status }, { new: true });
+  if (!c) throw ApiError.notFound('Contract not found');
+  
+  if (status === 'TERMINATED' || status === 'EXPIRED' || status === 'CANCELLED') {
+    await Property.findByIdAndUpdate(c.property, { status: 'AVAILABLE' });
+  } else if (status === 'ACTIVE') {
+    await Property.findByIdAndUpdate(c.property, { status: 'RENTED' });
+  }
+  
   ok(res, c);
 });
 
@@ -52,6 +79,40 @@ router.post('/:id/generate-invoices', requireRole('SUPER_ADMIN', 'MANAGER'), asy
   if (!c) throw ApiError.notFound('Contract not found');
   const count = await rentService.generateInvoicesForContract(c);
   ok(res, { generated: count });
+});
+
+router.post('/:id/renew', requireRole('SUPER_ADMIN', 'MANAGER', 'AGENT'), async (req, res) => {
+  const oldContract = await TenancyContract.findById(req.params.id);
+  if (!oldContract) throw ApiError.notFound('Contract not found');
+
+  const { startDate, endDate, annualRent } = req.body;
+  if (new Date(endDate) <= new Date(startDate)) {
+    throw ApiError.badRequest('End date must be after start date');
+  }
+
+  const contractCode = `TC-${Date.now().toString().slice(-6)}`;
+
+  const newContract = await TenancyContract.create({
+    ...oldContract.toObject(),
+    _id: undefined,
+    createdAt: undefined,
+    updatedAt: undefined,
+    code: contractCode,
+    startDate,
+    endDate,
+    annualRent: annualRent || oldContract.annualRent,
+    status: 'ACTIVE',
+    invoicesGenerated: false,
+    createdBy: req.user.id
+  });
+
+  oldContract.status = 'RENEWED';
+  await oldContract.save();
+
+  await rentService.generateInvoicesForContract(newContract);
+  await Property.findByIdAndUpdate(newContract.property, { status: 'RENTED' });
+
+  created(res, newContract);
 });
 
 router.delete('/:id', requireRole('SUPER_ADMIN'), async (req, res) => {

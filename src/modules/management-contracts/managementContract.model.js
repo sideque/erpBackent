@@ -1,20 +1,49 @@
 const mongoose = require('mongoose');
 
-const mgmtSchema = new mongoose.Schema(
+const managementContractSchema = new mongoose.Schema(
   {
-    code: { type: String, required: true, unique: true, uppercase: true, trim: true },
-    property: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: true, index: true },
-    owners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Owner' }],
-    commissionPct: { type: Number, required: true, min: 0, max: 100 },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
-    expensesBornBy: { type: String, enum: ['OWNER', 'COMPANY', 'SHARED'], default: 'OWNER' },
-    incomeRule: { type: String, enum: ['NET_AFTER_EXPENSES', 'GROSS_LESS_COMMISSION'], default: 'NET_AFTER_EXPENSES' },
-    status: { type: String, enum: ['ACTIVE', 'EXPIRED', 'TERMINATED'], default: 'ACTIVE', index: true },
-    notes: { type: String, default: '' },
+    propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property', required: true, index: true },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Owner', required: true, index: true },
+
+    contractStartDate: { type: Date, required: true },
+    contractEndDate: { type: Date, required: true },
+    autoRenew: { type: Boolean, default: false },
+
+    contractStatus: {
+      type: String,
+      enum: ['Active', 'Expired', 'Terminated', 'Pending'],
+      default: 'Pending',
+      index: true,
+    },
+
+    // Financial Terms
+    commissionType: { type: String, enum: ['Percentage', 'Fixed'], default: 'Percentage' },
+    commissionValue: { type: Number, required: true, min: 0 },
+    ownerSharePercentage: { type: Number, required: true, min: 0, max: 100 },
+    companySharePercentage: { type: Number, required: true, min: 0, max: 100 },
+    paymentCycle: { type: String, enum: ['Monthly', 'Quarterly', 'Yearly'], default: 'Monthly' },
+
+    // Expense Rules
+    expenseResponsibility: { type: String, enum: ['Owner', 'Company', 'Shared'], default: 'Owner' },
+    expenseApprovalRequired: { type: Boolean, default: true },
+    expenseLimit: { type: Number, default: 0 },
+
+    // Management Permissions
+    canCollectRent: { type: Boolean, default: true },
+    canManageTenants: { type: Boolean, default: true },
+    canHandleMaintenance: { type: Boolean, default: true },
+    canListProperty: { type: Boolean, default: true },
+
+    // Documents
+    contractFileUrl: { type: String },
+    additionalDocuments: [{ type: String }],
+
+    // Audit Fields
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );
 
-const ManagementContract = mongoose.model('ManagementContract', mgmtSchema);
+const ManagementContract = mongoose.model('ManagementContract', managementContractSchema);
 module.exports = { ManagementContract };
