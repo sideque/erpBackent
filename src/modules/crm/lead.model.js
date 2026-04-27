@@ -13,7 +13,7 @@ const leadSchema = new mongoose.Schema(
     budgetMax: { type: Number, default: 0 },
     source: { type: String, enum: ['WEBSITE', 'WALK_IN', 'REFERRAL', 'PORTAL', 'OTHER'], default: 'WEBSITE' },
     stage: { type: String, enum: STAGES, default: 'NEW', index: true },
-    agent: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    agent: { type: String, ref: 'User' },
     nextFollowUp: Date,
     notes: { type: String, default: '' },
     history: [
