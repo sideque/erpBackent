@@ -12,7 +12,7 @@ const paymentSchema = new mongoose.Schema(
     reference: { type: String, default: '' },
     paidAt: { type: Date, default: Date.now },
     notes: { type: String, default: '' },
-    recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    recordedBy: { type: String, ref: 'User' },
   },
   { timestamps: true }
 );
